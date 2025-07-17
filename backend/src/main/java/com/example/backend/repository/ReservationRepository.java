@@ -14,4 +14,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByEvent(Event event);
 
     boolean existsByUserAndEvent(User user, Event event);
+
+    List<Reservation> findByEventId(Long eventId);
 }

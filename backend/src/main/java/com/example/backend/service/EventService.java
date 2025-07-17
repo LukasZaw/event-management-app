@@ -73,4 +73,14 @@ public class EventService {
     public List<Event> getEventsByOrganizer(User organizer) {
         return eventRepository.findByOrganizer(organizer);
     }
+
+    // Wydarzenia po dacie
+    public List<Event> getEventsByDate(LocalDateTime dateTime) {
+        return eventRepository.findByDateTime(dateTime);
+    }
+
+    // Wydarzenia po dacie i lokalizacji
+    public List<Event> getEventsByDateAndLocation(LocalDateTime dateTime, String location) {
+        return eventRepository.findByDateTimeAndLocation(dateTime, location);
+    }
 }

@@ -53,5 +53,7 @@ public class Event {
     public void setTotalSeats(int totalSeats) { this.totalSeats = totalSeats; }
     public User getOrganizer() { return organizer; }
     public void setOrganizer(User organizer) { this.organizer = organizer; }
+
+   
 }
 

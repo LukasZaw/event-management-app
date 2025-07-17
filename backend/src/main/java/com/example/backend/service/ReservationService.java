@@ -52,4 +52,8 @@ public class ReservationService {
     public Optional<Reservation> getReservationById(Long reservationId) {
         return reservationRepository.findById(reservationId);
     }
+
+    public List<Reservation> getReservationsByEventId(Long eventId) {
+        return reservationRepository.findByEventId(eventId);
+    }
 }
