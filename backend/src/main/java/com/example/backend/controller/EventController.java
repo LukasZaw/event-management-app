@@ -8,6 +8,7 @@ import com.example.backend.repository.ReservationRepository;
 import com.example.backend.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -56,7 +57,13 @@ public class EventController {
     @PostMapping
     @PreAuthorize("hasAuthority('ORGANIZER')")
     public ResponseEntity<Event> createEvent(@Valid @RequestBody Event event) {
-        // Walidacja liczby miejsc, daty itp. można dodać w serwisie/modelu
+        // Pobierz email zalogowanego użytkownika
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User organizer = userRepository.findByEmail(email);
+        if (organizer == null) {
+            return ResponseEntity.status(401).build();
+        }
+        event.setOrganizer(organizer); // Ustaw organizatora
         Event saved = eventRepository.save(event);
         return ResponseEntity.ok(saved);
     }
