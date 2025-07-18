@@ -26,6 +26,16 @@ public class UserController {
                    .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Pobierz profil użytkownika po emailu
+    @GetMapping("/email/{email}")
+    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
+    }
+
     // Pobierz wszystkich użytkowników (np. dla admina)
     @GetMapping
     @PreAuthorize("hasAuthority('ORGANIZER')")
