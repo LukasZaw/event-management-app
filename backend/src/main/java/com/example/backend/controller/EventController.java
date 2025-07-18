@@ -63,6 +63,22 @@ public class EventController {
         if (organizer == null) {
             return ResponseEntity.status(401).build();
         }
+        // Walidacja pól eventu
+        if (event.getTitle() == null || event.getTitle().length() < 3 || event.getTitle().length() > 100) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (event.getDescription() == null || event.getDescription().length() < 10) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (event.getDateTime() == null || event.getDateTime().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (event.getLocation() == null || event.getLocation().length() < 3) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (event.getTotalSeats() < 1) {
+            return ResponseEntity.badRequest().body(null);
+        }
         event.setOrganizer(organizer); // Ustaw organizatora
         Event saved = eventRepository.save(event);
         return ResponseEntity.ok(saved);
@@ -75,7 +91,28 @@ public class EventController {
         Optional<Event> eventOpt = eventRepository.findById(id);
         if (eventOpt.isEmpty()) return ResponseEntity.notFound().build();
         Event event = eventOpt.get();
-        // TODO: sprawdź czy aktualny użytkownik to właściciel wydarzenia
+        // Walidacja właściciela wydarzenia
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User organizer = userRepository.findByEmail(email);
+        if (organizer == null || !event.getOrganizer().getId().equals(organizer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        // Walidacja pól eventu
+        if (eventDetails.getTitle() == null || eventDetails.getTitle().length() < 3 || eventDetails.getTitle().length() > 100) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (eventDetails.getDescription() == null || eventDetails.getDescription().length() < 10) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (eventDetails.getDateTime() == null || eventDetails.getDateTime().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (eventDetails.getLocation() == null || eventDetails.getLocation().length() < 3) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (eventDetails.getTotalSeats() < 1) {
+            return ResponseEntity.badRequest().body(null);
+        }
         event.setTitle(eventDetails.getTitle());
         event.setDescription(eventDetails.getDescription());
         event.setDateTime(eventDetails.getDateTime());
@@ -91,7 +128,12 @@ public class EventController {
     public ResponseEntity<?> deleteEvent(@PathVariable Long id) {
         Optional<Event> eventOpt = eventRepository.findById(id);
         if (eventOpt.isEmpty()) return ResponseEntity.notFound().build();
-        // TODO: sprawdź czy aktualny użytkownik to właściciel wydarzenia
+        Event event = eventOpt.get();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User organizer = userRepository.findByEmail(email);
+        if (organizer == null || !event.getOrganizer().getId().equals(organizer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
         eventRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
