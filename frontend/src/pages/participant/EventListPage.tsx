@@ -1,53 +1,115 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../api/axios';
-import { useAuth } from '../../auth/useAuth';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, CircularProgress, TextField } from '@mui/material';
+import Navbar from '../../components/Navbar';
+import { Link } from 'react-router-dom';
 
-interface User {
+type Event = {
   id: number;
-  name: string;
-  email: string;
-  role: string;
-}
+  title: string;
+  description: string;
+  dateTime: string;
+  location: string;
+  totalSeats: number;
+};
 
 const EventListPage: React.FC = () => {
-  const { user } = useAuth();
-  const [userData, setUserData] = useState<User | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [location, setLocation] = useState('');
+
+  const fetchEvents = () => {
+    setLoading(true);
+    setError('');
+
+    const params: { location?: string;} = {};
+    if (location) params.location = location;
+
+    axios
+      .get('/events', { params })
+      .then((res) => setEvents(res.data))
+      .catch(() => setError('Nie udało się pobrać wydarzeń.'))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    console.log("!!!!!!Fetching user data for:", user?.email);
-    // Pobierz dane użytkownika z backendu
-    const fetchUser = async () => {
-      try {
-        console.log("Fetching user data for:", user?.email);
-        const response = await axios.get(`/users/${user?.email}`);
-        setUserData(response.data);
-      } catch {
-        setUserData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (user?.email) fetchUser();
-  }, [user]);
+    fetchEvents();
+  }, []);
+
+  const handleFilter = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchEvents();
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return <Typography color="error" align="center">{error}</Typography>;
+  }
 
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
-      <Typography variant="h4" mb={2}>Testowa strona /events</Typography>
-      {loading ? (
-        <Typography>Ładowanie danych użytkownika...</Typography>
-      ) : userData ? (
-        <Paper elevation={3} sx={{ p: 3, minWidth: 300 }}>
-          <Typography variant="h6">Dane użytkownika:</Typography>
-          <Typography><b>ID:</b> {userData.id}</Typography>
-          <Typography><b>Imię i nazwisko:</b> {userData.name}</Typography>
-          <Typography><b>Email:</b> {userData.email}</Typography>
-          <Typography><b>Rola:</b> {userData.role}</Typography>
-        </Paper>
-      ) : (
-        <Typography color="error">Nie udało się pobrać danych użytkownika.</Typography>
-      )}
+    <Box>
+      <Navbar />
+      <Box p={4}>
+        <Typography variant="h4" mb={4} color="primary" align="center">
+          Dostępne wydarzenia
+        </Typography>
+        <Box component="form" onSubmit={handleFilter} display="flex" gap={2} mb={4} justifyContent="center">
+          <TextField
+            label="Lokalizacja"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            variant="outlined"
+          />
+          <Button type="submit" variant="contained" color="primary">
+            Filtruj
+          </Button>
+        </Box>
+        {events.length === 0 ? (
+          <Typography align="center">Brak dostępnych wydarzeń.</Typography>
+        ) : (
+          <Box display="flex" flexWrap="wrap" gap={3} justifyContent="center">
+            {events.map((event) => (
+              <Card key={event.id} sx={{ width: 340 }}>
+                <CardContent>
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    {event.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" mb={1}>
+                    {event.description}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Data:</b> {new Date(event.dateTime).toLocaleString()}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Lokalizacja:</b> {event.location}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Miejsc:</b> {event.totalSeats}
+                  </Typography>
+                </CardContent>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  component={Link}
+                  to={`/events/${event.id}`}
+                  sx={{ m: 2 }}
+                >
+                  Szczegóły
+                </Button>
+              </Card>
+            ))}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

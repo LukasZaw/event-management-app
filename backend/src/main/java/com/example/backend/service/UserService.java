@@ -48,4 +48,8 @@ public class UserService {
     public boolean isNameValid(String name) {
         return name != null && name.length() >= 3;
     }
+
+    public User findByEmail(String username) {
+        return userRepository.findByEmail(username);
+    }
 }

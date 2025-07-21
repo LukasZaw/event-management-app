@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
       const response = await axios.post('/auth/login', { email, password });
       login(response.data); // response.data to JWT
       //console.log('Zalogowano pomyślnie:', response.data);
-      navigate('/events');
+      navigate('/home');
     } catch (err: any) {
       setError('Nieprawidłowy email lub hasło');
     }

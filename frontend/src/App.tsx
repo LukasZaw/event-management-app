@@ -7,8 +7,11 @@ import { useAuth } from './auth/useAuth';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import EventListPage from './pages/participant/EventListPage';
-// import EventDetailsPage from './pages/participant/EventDetailsPage';
-// import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
+import HomePage from './pages/HomePage';
+import EventDetailsPage from './pages/participant/EventDetailsPage';
+import MyReservationsPage from './pages/participant/MyReservationsPage';
+import OrganizerDashboardPage from './pages/organizer/OrganizerDashboardPage';
+import OrganizerEvantDetailsPage from './pages/organizer/OrganizerEventDetailsPage'
 
 function PrivateRoute({ children }: { children: ReactElement }) {
   const { user } = useAuth();
@@ -23,16 +26,13 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/events" element={<EventListPage />} />
-          {/* <Route path="/events/:id" element={<EventDetailsPage />} />
-          <Route
-            path="/organizer"
-            element={
-              <PrivateRoute>
-                <OrganizerDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/events" />} /> */}
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/my-reservations" element={<PrivateRoute><MyReservationsPage /></PrivateRoute>} />
+          <Route path="/organizer-dashboard" element={<PrivateRoute><OrganizerDashboardPage /></PrivateRoute>} />
+          <Route path="/organizer/events/:id" element={<PrivateRoute><OrganizerEvantDetailsPage /></PrivateRoute>} />
+          <Route path="/" element={<Navigate to="/home" />} />
+          <Route path="*" element={<Navigate to="/home" />} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -1,8 +1,8 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import * as jwt_decode from 'jwt-decode';
+import { jwtDecode } from "jwt-decode";
+import { saveToken, getToken, removeToken } from './tokenUtils';
 
 type User = {
-    
   email: string;
   role: string;
 };
@@ -29,25 +29,26 @@ interface DecodedToken {
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(getToken());
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (token) {
       try {
-        const decoded = (jwt_decode as any)(token);
+        const decoded = jwtDecode<DecodedToken>(token);
         setUser({
           email: decoded.sub,
           role: decoded.role || decoded.authorities?.[0] || '',
         });
-        localStorage.setItem('token', token);
-      } catch {
+        saveToken(token);
+      } catch (err) {
+        console.error('Błąd dekodowania tokena:', err, token);
         setUser(null);
-        localStorage.removeItem('token');
+        removeToken();
       }
     } else {
       setUser(null);
-      localStorage.removeItem('token');
+      removeToken();
     }
   }, [token]);
 
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
+    removeToken();
   };
 
   return (

@@ -19,4 +19,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     
     List<Event> findByDateTimeAndLocation(LocalDateTime dateTime, String location);
 
+    List<Event> findByDateTimeAndLocationAndOrganizer(LocalDateTime dateTime, String location, User organizer);
+
+    List<Event> findByDateTimeAndOrganizer(LocalDateTime dateTime, User organizer);
+
+    List<Event> findByLocationAndOrganizer(String location, User organizer);
 }

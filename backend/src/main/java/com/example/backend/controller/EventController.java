@@ -30,11 +30,26 @@ public class EventController {
         this.userRepository = userRepository;
     }
 
-    // Pobierz wszystkie wydarzenia (dostępne dla wszystkich)
     @GetMapping
-    public List<Event> getAllEvents(@RequestParam(required = false) LocalDateTime date,
-                                    @RequestParam(required = false) String location) {
-        if (date != null && location != null) {
+    public List<Event> getAllEvents(
+            @RequestParam(required = false) LocalDateTime date,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String organizerId) {
+        if (organizerId != null) {
+            User organizer = userRepository.findByEmail(organizerId);
+            if (organizer == null) {
+                return List.of(); // Zwróć pustą listę, jeśli organizator nie istnieje
+            }
+            if (date != null && location != null) {
+                return eventRepository.findByDateTimeAndLocationAndOrganizer(date, location, organizer);
+            } else if (date != null) {
+                return eventRepository.findByDateTimeAndOrganizer(date, organizer);
+            } else if (location != null) {
+                return eventRepository.findByLocationAndOrganizer(location, organizer);
+            } else {
+                return eventRepository.findByOrganizer(organizer);
+            }
+        } else if (date != null && location != null) {
             return eventRepository.findByDateTimeAndLocation(date, location);
         } else if (date != null) {
             return eventRepository.findByDateTime(date);

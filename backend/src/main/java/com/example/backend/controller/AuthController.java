@@ -53,7 +53,8 @@ public class AuthController {
                 )
             );
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            User user = userService.findByEmail(userDetails.getUsername()); // lub pobierz User z repozytorium
+            String jwt = jwtUtil.generateToken(userDetails.getUsername(), user.getRole().name());
             return ResponseEntity.ok(jwt);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
