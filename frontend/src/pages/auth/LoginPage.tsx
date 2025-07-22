@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import axios from '../../api/axios';
 import { useAuth } from '../../auth/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +17,6 @@ const LoginPage: React.FC = () => {
     try {
       const response = await axios.post('/auth/login', { email, password });
       login(response.data); // response.data to JWT
-      //console.log('Zalogowano pomyślnie:', response.data);
       navigate('/home');
     } catch (err: any) {
       setError('Nieprawidłowy email lub hasło');
@@ -60,6 +59,14 @@ const LoginPage: React.FC = () => {
         <Button type="submit" variant="contained" color="primary" fullWidth>
           Zaloguj się
         </Button>
+      </Box>
+      <Box mt={2}>
+        <Typography variant="body2">
+          Nie masz konta?{' '}
+          <Link to="/register" style={{ textDecoration: 'none', color: '#1976d2' }}>
+            Zarejestruj się
+          </Link>
+        </Typography>
       </Box>
     </Box>
   );

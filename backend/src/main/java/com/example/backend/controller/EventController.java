@@ -6,6 +6,15 @@ import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.ReservationRepository;
 import com.example.backend.repository.UserRepository;
+import com.itextpdf.io.source.ByteArrayOutputStream;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+
+import com.itextpdf.layout.element.Paragraph;
+
+
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -153,7 +162,7 @@ public class EventController {
         return ResponseEntity.ok().build();
     }
 
-    // Lista uczestników zapisanych na wydarzenie (tylko organizator, właściciel wydarzenia)
+    // List
     @GetMapping("/{id}/participants")
     @PreAuthorize("hasAuthority('ORGANIZER')")
     public ResponseEntity<List<User>> getEventParticipants(@PathVariable Long id) {
@@ -161,4 +170,88 @@ public class EventController {
         List<User> users = reservations.stream().map(Reservation::getUser).toList();
         return ResponseEntity.ok(users);
     }
+
+    @GetMapping("/{id}/export-participants")
+    @PreAuthorize("hasAuthority('ORGANIZER')")
+    public ResponseEntity<byte[]> exportParticipantsData(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "pdf") String format
+    ) {
+        Optional<Event> eventOpt = eventRepository.findById(id);
+        if (eventOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Event event = eventOpt.get();
+
+        //check if the logged-in user is the organizer of the event
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User organizer = userRepository.findByEmail(email);
+        if (organizer == null || !event.getOrganizer().getId().equals(organizer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            byte[] fileData;
+            String fileName;
+
+            if ("csv".equalsIgnoreCase(format)) {
+                fileData = generateParticipantsCsv(event);
+                fileName = "participants_event_" + event.getId() + ".csv";
+            } else {
+                fileData = generateParticipantsPdf(event);
+                fileName = "participants_event_" + event.getId() + ".pdf";
+            }
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=" + fileName)
+                    .body(fileData);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    private byte[] generateParticipantsPdf(Event event) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PdfWriter writer = new PdfWriter(out);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        document.add(new Paragraph("Lista uczestników wydarzenia"));
+        document.add(new Paragraph("Tytuł: " + event.getTitle()));
+        document.add(new Paragraph("Data: " + event.getDateTime()));
+        document.add(new Paragraph("Lokalizacja: " + event.getLocation()));
+        document.add(new Paragraph(" "));
+
+        List<Reservation> reservations = reservationRepository.findByEventId(event.getId());
+        if (reservations.isEmpty()) {
+            document.add(new Paragraph("Brak zapisanych uczestników."));
+        } else {
+            document.add(new Paragraph("Uczestnicy:"));
+            for (Reservation reservation : reservations) {
+                User user = reservation.getUser();
+                document.add(new Paragraph("- " + user.getName() + " (" + user.getEmail() + ")"));
+            }
+        }
+
+        document.close();
+        return out.toByteArray();
+    }
+
+    private byte[] generateParticipantsCsv(Event event) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        StringBuilder csvBuilder = new StringBuilder();
+
+        csvBuilder.append("Imię Nazwisko,Email\n");
+
+        List<Reservation> reservations = reservationRepository.findByEventId(event.getId());
+        for (Reservation reservation : reservations) {
+            User user = reservation.getUser();
+            csvBuilder.append(user.getName()).append(",")
+                    .append(user.getEmail()).append("\n");
+        }
+
+        out.write(csvBuilder.toString().getBytes());
+        return out.toByteArray();
+    }
+
 }

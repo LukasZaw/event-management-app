@@ -27,6 +27,7 @@ const EventDetailsPage: React.FC = () => {
   const [reservationError, setReservationError] = useState('');
   const [isReserved, setIsReserved] = useState(false);
   const [reservationId, setReservationId] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     axios.get(`/events/${id}`)
@@ -49,13 +50,15 @@ const EventDetailsPage: React.FC = () => {
   const handleReservation = () => {
     setReservationError('');
     setReservationSuccess(false);
+    setIsProcessing(true);
 
     axios.post(`/reservations?eventId=${id}`)
       .then(() => {
         setReservationSuccess(true);
         setIsReserved(true);
       })
-      .catch(() => setReservationError('Nie udało się zarezerwować miejsca. Spróbuj ponownie.'));
+      .catch(() => setReservationError('Nie udało się zarezerwować miejsca. Spróbuj ponownie.'))
+      .finally(() => setIsProcessing(false));
   };
 
   const handleCancelReservation = () => {
@@ -119,8 +122,9 @@ const EventDetailsPage: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={handleReservation}
+              disabled={isProcessing}
             >
-              Zarezerwuj miejsce
+              {isProcessing ? 'Przetwarzanie...' : 'Zarezerwuj miejsce'}
             </Button>
           )}
           <Button variant="outlined" color="primary" href="/events">

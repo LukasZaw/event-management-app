@@ -70,6 +70,23 @@ const EventDetailsPage: React.FC = () => {
     setEditedEvent(prev => prev ? { ...prev, [name]: value } : null);
   };
 
+  const handleExport = (format: string) => {
+  axios.get(`/events/${id}/export-participants`, {
+    params: { format },
+    responseType: 'blob',
+  })
+    .then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `event_${id}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    })
+    .catch(() => setError('Nie udało się wyeksportować danych.'));
+};
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
@@ -123,6 +140,14 @@ const EventDetailsPage: React.FC = () => {
               ))}
             </List>
           )}
+        </Box>
+        <Box mt={4} display="flex" gap={2}>
+          <Button variant="contained" color="primary" onClick={() => handleExport('pdf')}>
+            Eksportuj do PDF
+          </Button>
+          <Button variant="contained" color="primary" onClick={() => handleExport('csv')}>
+            Eksportuj do CSV
+          </Button>
         </Box>
       </Box>
 
